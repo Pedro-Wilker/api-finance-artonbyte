@@ -10,7 +10,8 @@ import investmentRoutes from './modules/investments/investment.routes';
 import planningRoutes from './modules/planning/planning.routes';
 import taxRoutes from './modules/taxes/tax.routes';
 import marketRoutes from './modules/news/news.routes'; 
-
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './shared/docs/swagger';
 import { setupWebSocket } from './shared/infra/socket';
 import { setupJobs } from './shared/infra/cron';
 
@@ -37,6 +38,10 @@ app.use('/v1/investments', investmentRoutes);
 app.use('/v1/planning', planningRoutes);
 app.use('/v1/taxes', taxRoutes);
 app.use('/v1/market', marketRoutes);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: "Docs - Gestão Financeira"
+}));
 
 const PORT = process.env.PORT || 3000;
 
