@@ -5,12 +5,16 @@ import { redis } from '../infra/redis';
 
 describe('Auth Endpoints (Integration)', () => {
   beforeAll(async () => {
+    await prisma.transaction.deleteMany();
+    await prisma.category.deleteMany();
+    await prisma.taxCalculation.deleteMany();
+    await prisma.verificationToken.deleteMany();
     await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
     await prisma.$disconnect();
-    await redis.quit(); 
+    await redis.quit();
   });
 
   const testUser = {
@@ -40,6 +44,11 @@ describe('Auth Endpoints (Integration)', () => {
   });
 
   it('Deve fazer login e retornar um JWT', async () => {
+    await prisma.user.update({
+      where: { email: testUser.email },
+      data: { email_verified: true }
+    });
+
     const res = await request(app)
       .post('/v1/auth/login')
       .send({
@@ -49,7 +58,7 @@ describe('Auth Endpoints (Integration)', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('token');
-    
+
     const tokenParts = res.body.token.split('.');
     expect(tokenParts.length).toBe(3);
   });
