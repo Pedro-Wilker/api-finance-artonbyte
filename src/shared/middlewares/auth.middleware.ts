@@ -30,7 +30,8 @@ export const ensureAuthenticated = (req: Request, res: Response, next: NextFunct
   const [, token] = authHeader.split(' ');
 
   try {
-    const decoded = jwt.verify(process.env.JWT_SECRET || 'secret_dev_key', token) as TokenPayload;
+    // CORREÇÃO AQUI: Primeiro o 'token', depois a chave 'secret_dev_key'
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_dev_key') as TokenPayload;
 
     req.user = {
       id: decoded.sub,

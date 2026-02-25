@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import crypto from 'crypto';
-import { v4 as uuidv4 } from 'uuid';
+
 import { prisma } from '../../../shared/prisma';
 import { MailService } from '../../../shared/services/mail.service';
 
@@ -113,7 +113,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       }
     });
 
-    const rawToken = uuidv4();
+    const rawToken = crypto.randomUUID();
     const token_hash = crypto.createHash('sha256').update(rawToken).digest('hex');
     const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000); 
 

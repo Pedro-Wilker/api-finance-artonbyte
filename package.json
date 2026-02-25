@@ -1,9 +1,8 @@
 {
-  "scripts": {
+"scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
-    "prisma:seed": "ts-node prisma/seed.ts",
-    "test": "jest --passWithNoTests"
-    
+    "test": "jest --passWithNoTests --forceExit --runInBand",
+    "prisma:seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
@@ -20,7 +19,6 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1",
     "socket.io": "^4.8.3",
-    "uuid": "^13.0.0",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
   },
