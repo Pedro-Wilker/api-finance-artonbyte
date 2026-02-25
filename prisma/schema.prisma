@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaxRegime {
+  CLT
+  MEI
+  PJ
+  Autonomo
+}
+
+enum TransactionType {
+  income
+  expense
+}
+
+enum RecurrencePeriod {
+  daily
+  weekly
+  monthly
+  yearly
+}
+
+model User {
+  id               String        @id @default(uuid())
+  email            String        @unique
+  password_hash    String
+  full_name        String
+  cpf              String?       @unique
+  birth_date       DateTime?
+  monthly_income   Decimal       @default(0) @db.Decimal(15, 2)
+  dependents_count Int           @default(0)
+  tax_regime       TaxRegime     @default(CLT)
+  email_verified   Boolean       @default(false)
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+
+  categories            Category[]
+  transactions          Transaction[]
+  investments           Investment[]
+  budgets               Budget[]
+  tax_calculations      TaxCalculation[]
+  verification_tokens   VerificationToken[]
+
+  @@map("users")
+}
+
+model Category {
+  id           String        @id @default(uuid())
+  user_id      String?
+  name         String
+  type         TransactionType
+  color        String?       @db.VarChar(7)
+  icon         String?
+
+  user         User?         @relation(fields: [user_id], references: [id])
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@map("categories")
+}
+
+model Transaction {
+  id                String            @id @default(uuid())
+  user_id           String
+  category_id       String
+  type              TransactionType
+  amount            Decimal           @db.Decimal(15, 2)
+  description       String?
+  date              DateTime
+  is_recurring      Boolean           @default(false)
+  recurrence_period RecurrencePeriod?
+  tags              String[]
+
+  user              User              @relation(fields: [user_id], references: [id])
+  category          Category          @relation(fields: [category_id], references: [id])
+
+  @@index([user_id, date])
+  @@index([user_id, category_id])
+  @@map("transactions")
+}
+
+enum InvestmentType {
+  stocks
+  fiis
+  etf
+  crypto
+  cdb
+  lci
+  lca
+  tesouro
+  poupanca
+  other
+}
+
+enum IndexerType {
+  prefixado
+  CDI
+  IPCA
+  SELIC
+  outro
+}
+
+
+model Investment {
+  id                String         @id @default(uuid())
+  user_id           String
+  type              InvestmentType
+  name              String
+  amount_invested   Decimal        @db.Decimal(15, 2)
+  quantity          Decimal        @db.Decimal(15, 8)
+  purchase_price    Decimal        @db.Decimal(15, 8)
+  purchase_date     DateTime
+  maturity_date     DateTime?
+  interest_rate     Decimal?       @db.Decimal(8, 4)
+  index_type        IndexerType?
+  broker            String?
+  is_active         Boolean        @default(true)
+  created_at        DateTime       @default(now())
+
+  user              User           @relation(fields: [user_id], references: [id])
+
+  @@index([user_id, type])
+  @@index([user_id, is_active])
+  @@map("investments")
+}
+
+model Budget {
+  id             String   @id @default(uuid())
+  user_id        String
+  category_id    String
+  month          Int
+  year           Int
+  limit_amount   Decimal  @db.Decimal(15, 2)
+
+  user           User     @relation(fields: [user_id], references: [id])
+  category       Category @relation(fields: [category_id], references: [id])
+
+  @@map("budgets")
+}
+
+model TaxCalculation {
+  id             String   @id @default(uuid())
+  user_id        String
+  year           Int
+  gross_income   Decimal  @db.Decimal(15, 2)
+  deductions     Decimal  @db.Decimal(15, 2)
+  taxable_income Decimal  @db.Decimal(15, 2)
+  irpf_amount    Decimal  @db.Decimal(15, 2)
+  inss_amount    Decimal  @db.Decimal(15, 2)
+  created_at     DateTime @default(now())
+
+  user           User     @relation(fields: [user_id], references: [id])
+
+  @@index([user_id, year])
+  @@map("tax_calculations")
+}
+
+model VerificationToken {
+  id         String   @id @default(uuid())
+  user_id    String   
+  token_hash String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("verification_tokens") 
+}
