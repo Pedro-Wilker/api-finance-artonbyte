@@ -1,0 +1,61 @@
+name: CI Pipeline - Gestão Financeira
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  test:
+    name: Run Tests (E2E)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: adminpassword
+          POSTGRES_DB: gestao_financeira_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: 📥 Clonar o código do repositório
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Preparar o Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Instalar as dependências do projeto
+        run: npm install
+
+      - name: 🔧 Configurar Variáveis de Ambiente (.env) temporárias
+        run: |
+          echo "DATABASE_URL=postgresql://admin:adminpassword@localhost:5432/gestao_financeira_test?schema=public" >> .env
+          echo "JWT_SECRET=secret_ci_key_123" >> .env
+          echo "REDIS_HOST=localhost" >> .env
+          echo "REDIS_PORT=6379" >> .env
+          echo "PORT=3000" >> .env
+
+      - name: 🗄️ Configurar o Prisma (Gerar Tipagens e Banco de Dados)
+        run: |
+          npx prisma generate
+          npx prisma db push
+
+      - name: 🧪 Rodar a Bateria de Testes
+        run: npm test
