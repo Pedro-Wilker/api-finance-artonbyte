@@ -34,12 +34,6 @@ jobs:
       - name: 📥 Clonar o código do repositório
         uses: actions/checkout@v4
 
-      - name: ⚙️ Preparar o Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
       - name: 📦 Instalar as dependências do projeto
         run: npm install
 
