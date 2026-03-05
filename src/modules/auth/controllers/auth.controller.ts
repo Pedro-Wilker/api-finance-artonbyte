@@ -36,6 +36,15 @@ const updatePasswordSchema = z.object({
   new_password: z.string().min(6),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email('E-mail inválido'),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string(),
+  new_password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+});
+
 // ==========================================
 // CONTROLLERS DE AUTENTICAÇÃO
 // ==========================================
@@ -265,6 +274,78 @@ export const updatePassword = async (req: Request, res: Response): Promise<void>
       return;
     }
     res.status(500).json({ error: 'Erro ao alterar senha' });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = forgotPasswordSchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    if (!user) {
+      res.status(200).json({ message: 'Se o e-mail estiver cadastrado, um link de recuperação será enviado.' });
+      return;
+    }
+
+    const rawToken = crypto.randomUUID();
+    const token_hash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const expires_at = new Date(Date.now() + 1 * 60 * 60 * 1000); 
+
+    await prisma.verificationToken.create({
+      data: {
+        user_id: user.id,
+        token_hash,
+        expires_at
+      }
+    });
+
+    const resetLink = `http://localhost:5173/reset-password/${rawToken}`;
+    console.log(`\n📧 [E-MAIL SIMULADO] Recuperação de senha para: ${email}`);
+    console.log(`👉 Link de recuperação: ${resetLink}\n`);
+
+    res.status(200).json({ message: 'Se o e-mail estiver cadastrado, um link de recuperação será enviado.' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.issues });
+      return;
+    }
+    res.status(500).json({ error: 'Erro interno no servidor' });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token, new_password } = resetPasswordSchema.parse(req.body);
+    
+    const token_hash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const verificationRecord = await prisma.verificationToken.findUnique({
+      where: { token_hash }
+    });
+
+    if (!verificationRecord || verificationRecord.expires_at < new Date()) {
+      res.status(400).json({ error: 'Token inválido ou expirado. Solicite a recuperação novamente.' });
+      return;
+    }
+
+    const password_hash = await bcrypt.hash(new_password, 12);
+    await prisma.user.update({
+      where: { id: verificationRecord.user_id },
+      data: { password_hash }
+    });
+
+    await prisma.verificationToken.delete({
+      where: { id: verificationRecord.id }
+    });
+
+    res.status(200).json({ message: 'Senha alterada com sucesso! Você já pode fazer login.' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.issues });
+      return;
+    }
+    res.status(500).json({ error: 'Erro ao redefinir a senha' });
   }
 };
 
