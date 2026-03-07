@@ -10,6 +10,7 @@ import investmentRoutes from './modules/investments/investment.routes';
 import planningRoutes from './modules/planning/planning.routes';
 import taxRoutes from './modules/taxes/tax.routes';
 import marketRoutes from './modules/news/news.routes'; 
+import categoryRoutes from './modules/finances/category.routes';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './shared/docs/swagger';
 import { setupWebSocket } from './shared/infra/socket';
@@ -34,6 +35,7 @@ app.get('/health', (req, res) => {
 app.use('/v1/auth', authRoutes);
 app.use('/v1/users', userRoutes);
 app.use('/v1/transactions', transactionRoutes);
+app.use('/v1/categories', categoryRoutes);
 app.use('/v1/investments', investmentRoutes);
 app.use('/v1/planning', planningRoutes);
 app.use('/v1/taxes', taxRoutes);

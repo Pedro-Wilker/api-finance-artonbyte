@@ -1,35 +1,72 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+
+// Inicializa o Resend com a chave do seu .env
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export class MailService {
-    private static transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'sandbox.smtp.mailtrap.io',
-        port: Number(process.env.SMTP_PORT) || 2525,
-        auth: {
-            user: process.env.SMTP_USER || 'usuario_teste',
-            pass: process.env.SMTP_PASS || 'senha_teste'
-        }
-    });
 
+    // 1. E-mail de Verificação de Conta
     static async sendVerificationEmail(to: string, token: string) {
-        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        const verifyUrl = `${baseUrl}/v1/auth/verify-email/${token}`;
-        
-        const mailOptions = {
-            from: '"Gestão Financeira API" <no-reply@gestaofinanceira.com>',
-            to,
-            subject: 'Ative sua conta - Gestão Financeira',
-            html: `
-        <h2>Bem-vindo!</h2>
-        <p>Por favor, clique no link abaixo para verificar sua conta. O link expira em 24 horas.</p>
-        <a href="${verifyUrl}" target="_blank">Verificar E-mail</a>
-      `
-        };
+        const verificationLink = `http://localhost:8080/verify-email/${token}`;
 
         try {
-            await this.transporter.sendMail(mailOptions);
-            console.log(`✉️ [Mail] E-mail de verificação enviado para ${to}`);
-        } catch (error) {
-            console.error('❌ [Mail] Erro ao enviar e-mail:', error);
+            const { data, error } = await resend.emails.send({
+                from: 'FinanceApp <onboarding@resend.dev>', // E-mail padrão de testes do Resend
+                to: to,
+                subject: 'Confirme sua conta no FinanceApp',
+                html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Bem-vindo ao FinanceApp! 🚀</h2>
+            <p>Falta muito pouco para você começar a controlar suas finanças.</p>
+            <p>Clique no botão abaixo para ativar sua conta:</p>
+            <a href="${verificationLink}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 16px;">
+              Ativar Minha Conta
+            </a>
+            <p style="margin-top: 24px; font-size: 14px; color: #666;">
+              Se o botão não funcionar, copie e cole este link no navegador:<br>
+              ${verificationLink}
+            </p>
+          </div>
+        `,
+            });
+
+            if (error) {
+                console.error('❌ Erro do Resend (Verificação):', error);
+            } else {
+                console.log(`✅ E-mail de verificação enviado para ${to}! ID: ${data?.id}`);
+            }
+        } catch (err) {
+            console.error('❌ Erro inesperado ao enviar e-mail:', err);
+        }
+    }
+
+    // 2. E-mail de Recuperação de Senha
+    static async sendPasswordResetEmail(to: string, token: string) {
+        const resetLink = `http://localhost:8080/reset-password/${token}`;
+        try {
+            const { data, error } = await resend.emails.send({
+                from: 'FinanceApp <onboarding@resend.dev>',
+                to: to,
+                subject: 'Recuperação de Senha - FinanceApp',
+                html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Recuperação de Senha 🔒</h2>
+            <p>Você solicitou a redefinição da sua senha. Se não foi você, ignore este e-mail.</p>
+            <p>Para criar uma nova senha, clique no botão abaixo:</p>
+            <a href="${resetLink}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 16px;">
+              Redefinir Minha Senha
+            </a>
+          </div>
+        `,
+            });
+
+            if (error) {
+                console.error('❌ Erro do Resend (Reset de Senha):', error);
+            } else {
+                console.log(`✅ E-mail de reset enviado para ${to}! ID: ${data?.id}`);
+            }
+        } catch (err) {
+            console.error('❌ Erro inesperado ao enviar e-mail:', err);
         }
     }
 }
