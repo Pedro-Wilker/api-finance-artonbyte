@@ -19,7 +19,6 @@ const swaggerDefinition = {
   },
   security: [{ bearerAuth: [] }],
   paths: {
-    // ================== AUTH ==================
     '/v1/auth/register': {
       post: {
         summary: 'Registra um novo usuário',
@@ -72,7 +71,6 @@ const swaggerDefinition = {
       },
     },
     
-    // ================== TRANSAÇÕES ==================
     '/v1/transactions': {
       get: {
         summary: 'Lista as transações do usuário',
@@ -109,7 +107,6 @@ const swaggerDefinition = {
       },
     },
 
-    // ================== INVESTIMENTOS ==================
     '/v1/investments': {
       get: {
         summary: 'Lista portfólio',
@@ -141,7 +138,6 @@ const swaggerDefinition = {
       },
     },
 
-    // ================== IMPOSTOS & PLANEJAMENTO ==================
     '/v1/taxes/irpf/report': {
       get: {
         summary: 'Gera relatório de IRPF',

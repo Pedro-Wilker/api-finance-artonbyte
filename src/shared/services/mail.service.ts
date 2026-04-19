@@ -1,18 +1,13 @@
 import { Resend } from 'resend';
 
-// Inicializa o Resend com a chave do seu .env
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export class MailService {
 
-    // 1. E-mail de Verificação de Conta
     static async sendVerificationEmail(to: string, token: string) {
-        // 🚀 Ajustado para o domínio do Front-end em produção
         const verificationLink = `https://finance.artonbyte.com.br/verify-email/${token}`;
-
         try {
             const { data, error } = await resend.emails.send({
-                // 🚀 Ajustado para o seu domínio verificado no Resend
                 from: 'FinanceApp <nao-responda@artonbyte.com.br>',
                 to: to,
                 subject: 'Confirme sua conta no FinanceApp',
@@ -42,14 +37,11 @@ export class MailService {
         }
     }
 
-    // 2. E-mail de Recuperação de Senha
     static async sendPasswordResetEmail(to: string, token: string) {
-        // 🚀 Ajustado para o domínio do Front-end em produção
         const resetLink = `https://finance.artonbyte.com.br/reset-password/${token}`;
         
         try {
             const { data, error } = await resend.emails.send({
-                // 🚀 Ajustado para o seu domínio verificado no Resend
                 from: 'FinanceApp <nao-responda@artonbyte.com.br>',
                 to: to,
                 subject: 'Recuperação de Senha - FinanceApp',
