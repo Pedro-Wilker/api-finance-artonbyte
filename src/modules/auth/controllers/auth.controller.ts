@@ -25,7 +25,7 @@ const registerSchema = z.object({
 const updateProfileSchema = z.object({
   full_name: z.string().min(3).optional(),
   cpf: z.string().length(11).optional(),
-  birth_date: z.string().datetime().optional(), 
+  birth_date: z.string().datetime().optional(),
   monthly_income: z.number().min(0).optional(),
   dependents_count: z.number().min(0).optional(),
   tax_regime: z.enum(['CLT', 'MEI', 'PJ', 'Autonomo']).optional(),
@@ -54,7 +54,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = loginSchema.parse(req.body);
 
     const user = await prisma.user.findUnique({ where: { email } });
-    
+
     if (!user) {
       res.status(401).json({ error: 'Credenciais inválidas' });
       return;
@@ -66,7 +66,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    
+
     if (!isValidPassword) {
       res.status(401).json({ error: 'Credenciais inválidas' });
       return;
@@ -124,7 +124,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const rawToken = crypto.randomUUID();
     const token_hash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000); 
+    const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await prisma.verificationToken.create({
       data: {
@@ -153,7 +153,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const token = req.params.token as string;
-    
+
     const token_hash = crypto.createHash('sha256').update(token).digest('hex');
 
     const verificationRecord = await prisma.verificationToken.findUnique({
@@ -282,7 +282,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     const { email } = forgotPasswordSchema.parse(req.body);
 
     const user = await prisma.user.findUnique({ where: { email } });
-    
+
     if (!user) {
       res.status(200).json({ message: 'Se o e-mail estiver cadastrado, um link de recuperação será enviado.' });
       return;
@@ -290,7 +290,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 
     const rawToken = crypto.randomUUID();
     const token_hash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    const expires_at = new Date(Date.now() + 1 * 60 * 60 * 1000); 
+    const expires_at = new Date(Date.now() + 1 * 60 * 60 * 1000);
 
     await prisma.verificationToken.create({
       data: {
@@ -299,10 +299,8 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         expires_at
       }
     });
-
-    const resetLink = `http://localhost:5173/reset-password/${rawToken}`;
-    console.log(`\n📧 [E-MAIL SIMULADO] Recuperação de senha para: ${email}`);
-    console.log(`👉 Link de recuperação: ${resetLink}\n`);
+    
+    await MailService.sendPasswordResetEmail(user.email, rawToken);
 
     res.status(200).json({ message: 'Se o e-mail estiver cadastrado, um link de recuperação será enviado.' });
   } catch (error) {
@@ -313,11 +311,10 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     res.status(500).json({ error: 'Erro interno no servidor' });
   }
 };
-
 export const resetPassword = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token, new_password } = resetPasswordSchema.parse(req.body);
-    
+
     const token_hash = crypto.createHash('sha256').update(token).digest('hex');
 
     const verificationRecord = await prisma.verificationToken.findUnique({
@@ -355,7 +352,7 @@ export const deleteAccount = async (req: Request, res: Response): Promise<void> 
       where: { id: req.user?.id },
     });
 
-    res.status(204).send(); 
+    res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Erro ao excluir conta' });
   }

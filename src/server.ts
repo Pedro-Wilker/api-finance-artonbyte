@@ -14,6 +14,7 @@ import categoryRoutes from './modules/finances/category.routes';
 import goalRoutes from './modules/goals/goal.routes';
 import demandRoutes from './modules/demands/demand.routes';
 import routineRoutes from './modules/routines/routine.routes';
+import { startRoutineCron } from './modules/routines/routine.cron'; // Sua importação
 
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './shared/docs/swagger';
@@ -23,15 +24,20 @@ import { setupJobs } from './shared/infra/cron';
 const app = express();
 const server = http.createServer(app);
 
+// 👇 Proteção para não rodar Crons e WebSockets durante os testes do Jest
 if (process.env.NODE_ENV !== 'test') {
   setupWebSocket(server);
   setupJobs();
+  
+  // 🚀 O Cron de Rotinas é acionado aqui!
+  startRoutineCron(); 
 }
 
 app.use(helmet());
 
 const allowedOrigins = [
-  'http://localhost:5173',              
+  'http://localhost:5173',             
+  'http://localhost:8080', 
   'https://finance.artonbyte.com.br'     
 ];
 

@@ -3,15 +3,15 @@ import { TaskStatus } from '@prisma/client';
 import { differenceInDays, startOfDay, endOfDay, addDays } from 'date-fns'; // Dica: rode `npm install date-fns` se não tiver
 
 export class RoutineService {
-  
+
   static async createRoutine(userId: string, data: any) {
     return await prisma.routine.create({
       data: {
         user_id: userId,
         title: data.title,
         description: data.description,
-        days_of_week: data.days_of_week, 
-        time_of_day: data.time_of_day,   
+        days_of_week: data.days_of_week,
+        time_of_day: data.time_of_day,
       }
     });
   }
@@ -33,11 +33,23 @@ export class RoutineService {
     });
   }
 
+  static async createTask(userId: string, data: any) {
+    return await prisma.task.create({
+      data: {
+        user_id: userId,
+        title: data.title,
+        description: data.description,
+        due_date: data.due_date ? new Date(data.due_date) : new Date(),
+        status: 'PENDING'
+      }
+    });
+  }
+
   static async getDailyCockpit(userId: string, dateIso: string) {
     const targetDate = new Date(dateIso);
     const start = startOfDay(targetDate);
     const end = endOfDay(targetDate);
-    const dayOfWeek = targetDate.getDay(); 
+    const dayOfWeek = targetDate.getDay();
 
     const dailyTasks = await prisma.task.findMany({
       where: {
@@ -50,7 +62,7 @@ export class RoutineService {
       where: {
         user_id: userId,
         is_active: true,
-        days_of_week: { has: dayOfWeek } 
+        days_of_week: { has: dayOfWeek }
       }
     });
 
@@ -59,8 +71,8 @@ export class RoutineService {
         user_id: userId,
         status: { not: 'DONE' },
         deadline: {
-          gte: startOfDay(new Date()), 
-          lte: endOfDay(addDays(new Date(), 7)) 
+          gte: startOfDay(new Date()),
+          lte: endOfDay(addDays(new Date(), 7))
         }
       },
       select: { id: true, title: true, deadline: true, status: true, priority: true }
@@ -77,9 +89,9 @@ export class RoutineService {
 
     return {
       date: start.toISOString(),
-      routines_to_execute: activeRoutines, 
+      routines_to_execute: activeRoutines,
       scheduled_tasks: dailyTasks,
-      attention_demands: demandsWithCountdown 
+      attention_demands: demandsWithCountdown
     };
   }
 }

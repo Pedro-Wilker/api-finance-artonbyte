@@ -39,7 +39,7 @@ export class MailService {
 
     static async sendPasswordResetEmail(to: string, token: string) {
         const resetLink = `https://finance.artonbyte.com.br/reset-password/${token}`;
-        
+
         try {
             const { data, error } = await resend.emails.send({
                 from: 'FinanceApp <nao-responda@artonbyte.com.br>',
@@ -64,6 +64,43 @@ export class MailService {
             }
         } catch (err) {
             console.error('❌ Erro inesperado ao enviar e-mail:', err);
+        }
+    }
+
+
+    static async sendRoutineReminder(to: string, userName: string, routineTitle: string, time: string) {
+        try {
+            const { data, error } = await resend.emails.send({
+                from: 'FinanceApp <nao-responda@artonbyte.com.br>',
+                to: to,
+                subject: `⏰ Lembrete: ${routineTitle}`,
+                html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8fafc; padding: 24px; border-radius: 8px;">
+            <div style="background-color: white; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <h2 style="color: #0f172a; margin-top: 0;">Olá, ${userName.split(' ')[0]}! 👋</h2>
+              <p style="color: #475569; font-size: 16px;">
+                Este é um lembrete rápido da sua rotina programada para as <strong>${time}</strong>.
+              </p>
+              
+              <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0; border-radius: 0 8px 8px 0;">
+                <h3 style="color: #1e3a8a; margin: 0; font-size: 18px;">🎯 ${routineTitle}</h3>
+              </div>
+              
+              <p style="color: #475569; font-size: 14px; margin-bottom: 0;">
+                Acesse o seu painel do <a href="https://finance.artonbyte.com.br" style="color: #3b82f6; text-decoration: none; font-weight: bold;">FinanceApp</a> para marcar esta tarefa como concluída!
+              </p>
+            </div>
+          </div>
+        `,
+            });
+
+            if (error) {
+                console.error(`❌ Erro do Resend (Lembrete ${routineTitle}):`, error);
+            } else {
+                console.log(`✅ Lembrete de rotina enviado para ${to}!`);
+            }
+        } catch (err) {
+            console.error('❌ Erro inesperado ao enviar lembrete:', err);
         }
     }
 }

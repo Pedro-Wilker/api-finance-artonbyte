@@ -3,7 +3,7 @@ import { RoutineService } from '../services/routine.service';
 import { TaskStatus } from '@prisma/client';
 
 export class RoutineController {
-  
+
   async index(req: Request, res: Response): Promise<void> {
     try {
       const routines = await RoutineService.getUserRoutines(req.user!.id);
@@ -22,10 +22,25 @@ export class RoutineController {
     }
   }
 
+  async createTask(req: Request, res: Response) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Usuário não autenticado.' });
+      }
+
+      const userId = req.user.id;
+      const data = req.body;
+      const task = await RoutineService.createTask(userId, data);
+      return res.status(201).json(task);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
   async getDailyAgenda(req: Request, res: Response): Promise<void> {
     try {
       const dateParam = (req.query.date as string) || new Date().toISOString();
-      
+
       const cockpitData = await RoutineService.getDailyCockpit(req.user!.id, dateParam);
       res.json(cockpitData);
     } catch (error: any) {
